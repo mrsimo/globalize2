@@ -77,28 +77,35 @@ module Globalize
             end
           end
                     
-          def create_translation_table!(fields)
+          def create_translation_table!
             translated_fields = self.globalize_options[:translated_attributes]
-            translated_fields.each do |f|
-              raise MigrationMissingTranslatedField, "Missing translated field #{f}" unless fields[f]
-            end
-            fields.each do |name, type|
-              unless translated_fields.member? name 
-                raise UntranslatedMigrationField, "Can't migrate untranslated field: #{name}"
-              end              
-              unless [ :string, :text ].member? type
-                raise BadMigrationFieldType, "Bad field type for #{name}, should be :string or :text"
-              end 
-            end
             translation_table_name = self.name.underscore + '_translations'
+            
             self.connection.create_table(translation_table_name) do |t|
               t.references self.table_name.singularize
               t.string :locale
-              fields.each do |name, type|
-                t.column name, type
+              translated_fields.each do |name|
+                t.column name, self.columns_hash[name.to_s].type
               end
               t.timestamps              
             end
+            
+            self.connection.add_index translation_table_name, [:locale,"#{self.table_name.singularize}_id"]
+            
+            for item in self.all
+              (I18n.available_locales - [:root]).each do |l|
+                I18n.locale = l.to_s
+                translated_fields.keys.each do |k|
+                  eval("item.#{k.to_s} = item[:#{k.to_s}]")
+                end
+                item.save
+              end
+            end
+            
+            translated_fields.each do |name|
+              self.connection.remove_column self.table_name, name
+            end
+            
           end
 
           def drop_translation_table!
