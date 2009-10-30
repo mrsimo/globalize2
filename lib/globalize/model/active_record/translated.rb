@@ -95,7 +95,7 @@ module Globalize
             for item in self.all
               (I18n.available_locales - [:root]).each do |l|
                 I18n.locale = l.to_s
-                translated_fields.keys.each do |k|
+                translated_fields.each do |k|
                   eval("item.#{k.to_s} = item[:#{k.to_s}]")
                 end
                 item.save
