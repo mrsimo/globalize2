@@ -36,4 +36,18 @@ ActiveRecord::Schema.define do
     t.text       :content
   end
   
+  create_table :banners, :force => true do |t|
+    t.string :name
+  end
+  
+  create_table :banner_translations, :force => true do |t|
+    t.string      :locale
+    t.references  :banner
+    t.integer     :image_id
+  end
+  
+  create_table :images, :force => true do |t|
+    t.string :name
+  end
+  
 end

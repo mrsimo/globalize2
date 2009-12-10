@@ -89,7 +89,14 @@ module Globalize
             break
           end
         end
-        result && Translation::Attribute.new(result, :locale => locale, :requested_locale => requested_locale)
+        if result && result.is_a?(Fixnum)
+          result = result.to_s
+        end
+        if result
+          Translation::Attribute.new(result, :locale => locale, :requested_locale => requested_locale)
+        else
+          nil
+        end
       end
     end
   end
